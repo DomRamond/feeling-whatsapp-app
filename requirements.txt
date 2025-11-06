@@ -1,6 +1,10 @@
-streamlit
-pandas
-matplotlib
-pysentimiento
-torch
-chardet
+streamlit>=1.28.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+pysentimiento>=0.7.0
+transformers>=4.30.0
+torch>=2.0.0
+chardet>=5.0.0
+scikit-learn>=1.3.0
+scipy>=1.11.0
+numpy>=1.24.0
