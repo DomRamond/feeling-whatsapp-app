@@ -5,25 +5,38 @@ import streamlit as st
 import chardet
 from pysentimiento import create_analyzer
 
+# Configuração inicial
 st.set_page_config(page_title="Analisador de Sentimento WhatsApp", layout="centered")
 
 st.title("?? Analisador de Sentimento de Grupos do WhatsApp")
 st.write("Envie um arquivo `.txt` exportado de uma conversa e veja o clima emocional do grupo.")
 
+# Upload do arquivo
 uploaded_file = st.file_uploader("?? Escolha o arquivo de conversa (.txt)", type=["txt"])
 
 if uploaded_file:
-    # --- Detectar automaticamente a codificação ---
+    # --- Detectar automaticamente a codificação do arquivo ---
     raw_data = uploaded_file.read()
-    detected = chardet.detect(raw_data)
-    encoding_detected = detected["encoding"] or "utf-8"
 
     try:
+        # 1?? Detectar codificação com chardet
+        detected = chardet.detect(raw_data)
+        encoding_detected = detected.get("encoding", None)
+
+        # 2?? Se não detectar, assume Latin-1 (padrão do WhatsApp PT-BR)
+        if encoding_detected is None:
+            encoding_detected = "latin-1"
+
+        # 3?? Decodificar texto com codificação detectada
         text = raw_data.decode(encoding_detected, errors="ignore").splitlines()
+
     except Exception:
+        # 4?? Se ainda der erro, tenta Latin-1
         text = raw_data.decode("latin-1", errors="ignore").splitlines()
 
-    # --- Parse do arquivo ---
+    st.write(f"?? Arquivo detectado como: `{encoding_detected}`")
+
+    # --- Parse do arquivo WhatsApp ---
     pattern = re.compile(r'^(\d{1,2}/\d{1,2}/\d{2,4})\s+(\d{1,2}:\d{2})\s*-\s*(.*?):\s*(.*)$')
     rows = []
     for line in text:
@@ -50,7 +63,7 @@ if uploaded_file:
     st.write("### ?? Amostra de mensagens analisadas")
     st.dataframe(df.head(20))
 
-    # --- Visualização geral ---
+    # --- Distribuição geral dos sentimentos ---
     st.write("### ?? Distribuição geral dos sentimentos")
     sent_counts = df["sentimento"].value_counts()
     fig1, ax1 = plt.subplots()
