@@ -2,6 +2,7 @@ import re
 import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
+import chardet
 from pysentimiento import create_analyzer
 
 st.set_page_config(page_title="Analisador de Sentimento WhatsApp", layout="centered")
@@ -12,8 +13,17 @@ st.write("Envie um arquivo `.txt` exportado de uma conversa e veja o clima emoci
 uploaded_file = st.file_uploader("?? Escolha o arquivo de conversa (.txt)", type=["txt"])
 
 if uploaded_file:
+    # --- Detectar automaticamente a codificação ---
+    raw_data = uploaded_file.read()
+    detected = chardet.detect(raw_data)
+    encoding_detected = detected["encoding"] or "utf-8"
+
+    try:
+        text = raw_data.decode(encoding_detected, errors="ignore").splitlines()
+    except Exception:
+        text = raw_data.decode("latin-1", errors="ignore").splitlines()
+
     # --- Parse do arquivo ---
-    text = uploaded_file.read().decode("utf-8", errors="ignore").splitlines()
     pattern = re.compile(r'^(\d{1,2}/\d{1,2}/\d{2,4})\s+(\d{1,2}:\d{2})\s*-\s*(.*?):\s*(.*)$')
     rows = []
     for line in text:
@@ -24,6 +34,7 @@ if uploaded_file:
             rows.append({'date': date, 'time': time, 'author': author, 'message': msg})
         elif rows and line:
             rows[-1]['message'] += ' ' + line
+
     df = pd.DataFrame(rows)
     st.success(f"? {len(df)} mensagens carregadas com sucesso!")
 
