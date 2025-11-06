@@ -19,10 +19,12 @@ st.write("Envie um arquivo `.txt` exportado de uma conversa e veja o clima emoci
 uploaded_file = st.file_uploader("?? Escolha o arquivo de conversa (.txt)", type=["txt"])
 
 if uploaded_file is not None:
-    # Leitura segura do arquivo
+    # Leitura BINÁRIA segura do arquivo (evita erro UTF-8)
     try:
-        uploaded_file.seek(0)
-        raw_data = uploaded_file.getvalue()
+        # Força leitura como bytes, sem decodificação automática
+        raw_data = uploaded_file.read()
+        if isinstance(raw_data, str):
+            raw_data = raw_data.encode('latin-1')
     except Exception as e:
         st.error(f"? Erro ao ler o arquivo: {e}")
         st.stop()
@@ -42,14 +44,14 @@ if uploaded_file is not None:
 
     # Decodificação com fallback robusto
     text_decoded = None
-    encodings_to_try = [encoding_detected, "utf-8", "latin-1", "cp1252", "iso-8859-1"]
+    encodings_to_try = ["latin-1", "utf-8", "cp1252", "iso-8859-1", "windows-1252"]
     
     for enc in encodings_to_try:
         try:
             text_decoded = raw_data.decode(enc)
             encoding_used = enc
             break
-        except (UnicodeDecodeError, AttributeError):
+        except (UnicodeDecodeError, AttributeError, LookupError):
             continue
     
     # Último recurso: ignorar erros
