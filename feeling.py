@@ -7,7 +7,7 @@ import chardet
 from pysentimiento import create_analyzer
 
 # ==========================
-# CONFIGURAÇÕES DO STREAMLIT
+# CONFIGURAÇÕES DO STREAMLIT #v2
 # ==========================
 st.set_page_config(page_title="Analisador de Sentimento WhatsApp", layout="centered")
 
@@ -19,37 +19,33 @@ st.write("Envie um arquivo `.txt` exportado de uma conversa e veja o clima emoci
 # ==========================
 uploaded_file = st.file_uploader("?? Escolha o arquivo de conversa (.txt)", type=["txt"])
 
-if uploaded_file:
-    # ------------------------------------------
-    # LEITURA SEGURA DO ARQUIVO (À PROVA DE ERROS)
-    # ------------------------------------------
+if uploaded_file is not None:
     try:
+        # Força leitura binária segura
         uploaded_file.seek(0)
-        raw_data = uploaded_file.read()
+        raw_data = uploaded_file.getvalue()
     except Exception as e:
         st.error(f"? Erro ao ler o arquivo: {e}")
         st.stop()
 
-    # Detectar automaticamente a codificação
+    # Detectar automaticamente a codificação com chardet
     try:
         detected = chardet.detect(raw_data)
-        encoding_detected = detected.get("encoding", None)
-        if encoding_detected is None:
-            encoding_detected = "latin-1"
+        encoding_detected = detected.get("encoding") or "latin-1"
     except Exception:
         encoding_detected = "latin-1"
 
-    # Garantir decodificação sem falhas
+    # Garantir decodificação sem falhas (com fallback)
     try:
         text_decoded = raw_data.decode(encoding_detected, errors="ignore")
     except Exception:
         text_decoded = raw_data.decode("latin-1", errors="ignore")
 
-    # Converter para lista de linhas
+    # Converter em lista de linhas
     text = text_decoded.splitlines()
 
-    st.write(f"?? Arquivo detectado como: `{encoding_detected}`")
-    st.caption("Se o texto tiver acentuação incorreta, provavelmente o arquivo foi exportado com codificação Latin-1, o que é comum no WhatsApp PT-BR.")
+    st.write(f"?? Codificação detectada: `{encoding_detected}`")
+    st.caption("Se o texto tiver acentuação incorreta, o arquivo provavelmente foi exportado com codificação Latin-1, o que é comum no WhatsApp PT-BR.")
 
     # ==========================
     # PARSE DO ARQUIVO WHATSAPP
